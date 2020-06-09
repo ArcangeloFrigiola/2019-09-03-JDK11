@@ -5,6 +5,7 @@
 package it.polito.tdp.food;
 
 import java.net.URL;
+
 import java.util.ResourceBundle;
 import it.polito.tdp.food.model.Model;
 import javafx.event.ActionEvent;
@@ -40,7 +41,7 @@ public class FoodController {
     private Button btnCammino; // Value injected by FXMLLoader
 
     @FXML // fx:id="boxPorzioni"
-    private ComboBox<?> boxPorzioni; // Value injected by FXMLLoader
+    private ComboBox<String> boxPorzioni; // Value injected by FXMLLoader
 
     @FXML // fx:id="txtResult"
     private TextArea txtResult; // Value injected by FXMLLoader
@@ -48,20 +49,86 @@ public class FoodController {
     @FXML
     void doCammino(ActionEvent event) {
     	txtResult.clear();
-    	txtResult.appendText("Cerco cammino peso massimo...");
+    	int passi;
+    	
+    	try {
+    		
+    		passi = Integer.parseInt(this.txtPassi.getText());
+    	
+    	}catch(NumberFormatException e){
+    		txtResult.appendText("Inserire un valore numerico nel form \"Passi\"");
+    		return;
+    	}
+    	
+    	String porzionePartenza;
+    	try {
+    		
+    		porzionePartenza = this.boxPorzioni.getValue();
+    	
+    	}catch(Exception e){
+    		txtResult.appendText("Scegliere un valore dal menù a tendina!");
+    		return;
+    	}
+
+		try {
+			
+			this.txtResult.appendText(this.model.cercaPercorsoMax(porzionePartenza, passi));
+
+		} catch (Exception e) {
+			txtResult.appendText("Errore, nessun percorso trovato!");
+			return;
+		}
+    	
+    	
+    	
     }
 
     @FXML
     void doCorrelate(ActionEvent event) {
     	txtResult.clear();
-    	txtResult.appendText("Cerco porzioni correlate...");
+    	try {
+    		
+    		txtResult.appendText(this.model.getAdiacenti(this.boxPorzioni.getValue()));
+    		
+    	}catch(Exception e) {
+    		txtResult.appendText("Inserire una opzione dal menù a tendina!");
+    		return;
+    	}
+    	
     	
     }
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
+    	
     	txtResult.clear();
-    	txtResult.appendText("Creazione grafo...");
+    	
+    	double calories;
+    	
+		try {
+
+			calories = Double.parseDouble(this.txtCalorie.getText());
+			
+			if (calories > 0) {
+				this.model.creaGrafo(calories);
+				if (this.model.getNumVertex() > 0) {
+					txtResult.appendText("Grafo creato!\nNumero vertici: " + this.model.getNumVertex()
+							+ "\nNumero archi: " + this.model.getNumEdges());
+					
+					this.boxPorzioni.getItems().clear();
+					this.boxPorzioni.getItems().addAll(this.model.getVertici());
+				} else {
+					txtResult.appendText("Attenzione! Impossibile creare un grafo con le calorie inserite!");
+				}
+			} else {
+				txtResult.appendText("Attenzione! Inserire un valore numerico nel form \"Calorie\" maggiore di zero!");
+			}
+    	}catch(Exception e){
+    		
+    		txtResult.appendText("Attenzione! Inserire un valore numerico nel form \"Calorie\"");
+    		return;
+    	}
+    	
     	
     }
 

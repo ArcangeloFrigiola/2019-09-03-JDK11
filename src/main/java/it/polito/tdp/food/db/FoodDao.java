@@ -1,11 +1,17 @@
 package it.polito.tdp.food.db;
 
 import java.sql.Connection;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.jgrapht.Graph;
+import org.jgrapht.Graphs;
+import org.jgrapht.graph.DefaultWeightedEdge;
+
 import it.polito.tdp.food.model.Condiment;
 import it.polito.tdp.food.model.Food;
 import it.polito.tdp.food.model.Portion;
@@ -109,6 +115,79 @@ public class FoodDao {
 
 	}
 	
+	public List<String> listPortionFormCalories(double C){
+		
+		String sql = "SELECT DISTINCT p.portion_display_name AS name " + 
+				"FROM `portion` AS p " + 
+				"WHERE p.calories<? "+
+				"ORDER BY name";
+		
+		try {
+			Connection conn = DBConnect.getConnection() ;
+
+			PreparedStatement st = conn.prepareStatement(sql) ;
+			
+			List<String> list = new ArrayList<>() ;
+			
+			st.setDouble(1, C);
+			ResultSet res = st.executeQuery() ;
+			
+			while(res.next()) {
+				try {
+		
+					list.add(res.getString("name"));
+					
+				} catch (Throwable t) {
+					t.printStackTrace();
+				}
+			}
+			
+			conn.close();
+			return list ;
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null ;
+		}
+
+	}
 	
+	public void adiacenze(Graph<String, DefaultWeightedEdge> g) {
+
+		String sql = "SELECT p1.food_code, COUNT(DISTINCT p1.food_code) AS peso, p1.portion_display_name AS porzione1, p2.portion_display_name AS porzione2 " + 
+				"FROM `portion` AS p1, `portion` AS p2 " + 
+				"WHERE p1.food_code=p2.food_code AND p1.portion_display_name!=p2.portion_display_name " + 
+				"GROUP BY p1.portion_display_name, p2.portion_display_name " + 
+				"ORDER BY peso";
+
+		try {
+			Connection conn = DBConnect.getConnection();
+
+			PreparedStatement st = conn.prepareStatement(sql);
+
+			ResultSet res = st.executeQuery();
+
+			while (res.next()) {
+				try {
+					
+					if(g.containsVertex(res.getString("porzione1")) && g.containsVertex(res.getString("porzione2"))){
+						Graphs.addEdge(g, res.getString("porzione1"), 
+								res.getString("porzione2"), res.getInt("peso"));
+					}
+					
+				} catch (Throwable t) {
+					t.printStackTrace();
+				}
+			}
+
+			conn.close();
+			return ;
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return ;
+		}
+
+	}
 
 }
